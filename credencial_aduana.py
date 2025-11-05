@@ -13,9 +13,11 @@ nombre_empleado = "Liliana Zambrana Paco"
 nombre_remitente = "Edwing Mijael Delgadillo Navia"
 cargo_remitente = "Jefe de Gestión y RRHH"
  
-referencia = "Designación Personal de \nSeguridad – Ad Interior"
+referencia = "Entrega Credencial Personal \nAcreditado ante la AN"
 lugar = "La Paz – Bolivia"
 titulo_memorandum = "MEMORANDUM"
+fecha_inicio = "20/06/2025"
+fecha_fin = "20/06/2025"
 
 # ============================================================
 # CONFIGURACIÓN DE DOCUMENTO
@@ -68,6 +70,62 @@ font_website = get_truetype_or_default(base_font_paths, 30, is_bold=False)
 # ============================================================
 # Helpers: wrap por píxeles y justificación mejorada
 # ============================================================
+
+bold_words = set([
+    "PÉRDIDA", "O", "DETERIORO",
+    "RD", "01-085-24", "01-003-24",
+    "Clasificación", "Contravenciones", "Aduaneras",
+    "LABORAL",
+    "Credencial,", "Porta", "credencial", "y", "cinta", "OEA.",
+    "AN"
+])
+
+def draw_paragraph_with_bold_justified(draw, text, start_x, start_y, max_width, font_normal, font_bold, color, line_height, leading):
+    words = text.split()
+    lines = []
+    curr = ""
+    for w in words:
+        test = curr + (" " if curr else "") + w
+        w_px = draw.textbbox((0,0), test, font=font_normal)[2]
+        if w_px <= max_width:
+            curr = test
+        else:
+            lines.append(curr)
+            curr = w
+    lines.append(curr)
+
+    y = start_y
+    for i, line in enumerate(lines):
+        parts = line.split()
+        total_words_width = 0
+        parts_widths = []
+        for part in parts:
+            f = font_bold if part.strip(",.").upper() in bold_words else font_normal
+            pw = draw.textbbox((0,0), part, font=f)[2]
+            parts_widths.append((part, f, pw))
+            total_words_width += pw
+
+        gaps = len(parts) - 1
+        space_w = draw.textbbox((0,0), " ", font=font_normal)[2]
+
+        if gaps > 0 and i != len(lines) - 1:
+            extra = (max_width - (total_words_width + space_w*gaps)) / gaps
+        else:
+            extra = 0
+
+        x = start_x
+        for idx, (part, f, pw) in enumerate(parts_widths):
+            draw.text((x, y), part, fill=color, font=f)
+            x += pw
+            if idx < gaps:
+                x += space_w + extra
+
+        y += line_height + leading
+
+    return y
+
+
+
 def wrap_text_by_pixels(draw, text, font, max_width):
     """Rompe el texto en líneas que no excedan max_width (en píxeles)."""
     words = text.split()
@@ -259,22 +317,18 @@ draw.line([(600, header_bottom_y + 7), (width - 150, header_bottom_y + 7)], fill
 body_text_x_start = left_col_x
 body_text_y_start = header_bottom_y + 60
 
-intro_paragraphs = [
-    "Por medio de la presente, y en cumplimiento de los requisitos establecidos en el Reglamento del Programa Operador Económico Autorizado (OEA), se le comunica su designación formal como personal de seguridad de la Agencia Vilaseca S.A.",
-    "Como responsable de la seguridad física de las instalaciones, se le recuerda fortalecer las siguientes responsabilidades:"
-]
-
-bullet_items = [
-    "Apoyar la seguridad física de las instalaciones durante su jornada laboral.",
-    "Mantener vigilancia constante en su área de trabajo asignada y colindante.",
-    "Informar de manera oportuna sobre cualquier riesgo físico detectado, así como contribuir a su prevención.",
-    "Brindar apoyo inmediato ante situaciones de emergencia, cumpliendo con los procedimientos establecidos para el control de ingreso de personal y visitas, correspondencia y paquetería, así como los planes de contingencia y demás lineamientos aplicables dentro sus funciones y atribuciones."
-]
+fecha_inicio_credencial = "21 de octubre del 2025"
+fecha_fin_credencial   = "21 de octubre del 2027"
 
 closing_paragraphs = [
-    "Asimismo, se le recuerda que, a partir de esta designación, deberá conocer y aplicar los procedimientos de seguridad correspondientes, asegurando el estricto cumplimiento.",
-    "Sin otro particular, reiteramos nuestra confianza en el desempeño de sus funciones."
+    f"Mediante la presente, se le hace la entrega de la credencial emitida por la AN de personal acreditado para realizar trámites inherentes a la gestión de despachos en las diferentes aduanas; la misma tendrá validez a partir del {fecha_inicio_credencial}, hasta el {fecha_fin_credencial}.\n\n"
+    "Informarle que a partir de la fecha debe portar todos los días esta credencial, que está bajo su entera responsabilidad. En caso de PÉRDIDA O DETERIORO se procederá de acuerdo a la RD 01-085-24 la cual indica que en caso de reposición será pasible a la aplicación de sanciones establecidas en la RD 01-003-24 Clasificación de Contravenciones Aduaneras, independientemente de las acciones legales que correspondan por la mala utilización de la credencial, mismo que será asumido por su persona.\n\n"
+    "En caso que usted deje de mantener una relación LABORAL con VILASECA S.A., la credencial deberá ser devuelta al área de Recursos Humanos para el envió a la Aduana Nacional para su destrucción, en la devolución debe entregar: Credencial, Porta credencial y cinta OEA.\n\n"
+    "De la misma forma en caso de estar cerca el vencimiento de la misma informar a Recursos Humanos para tramitar la renovación ante la AN con una semana de anticipación.\n\n"
 ]
+
+
+ 
 
 letter_block_width = width - body_text_x_start - 150
 line_height = font_body.getbbox("A")[3] - font_body.getbbox("A")[1]
@@ -287,53 +341,27 @@ width_estimado = bbox_estimado[2] - bbox_estimado[0]
 draw.text((body_text_x_start + width_estimado + 10, current_y), f"{nombre_empleado}:", fill=text_color, font=font_body, align="left")
 current_y += line_height + leading * 10
 
-# Párrafos introductorios: uso wrap por píxeles + justificar
-for p in intro_paragraphs:
-    wrapped = wrap_text_by_pixels(draw, p, font_body, letter_block_width)
-    for idx, ln in enumerate(wrapped):
-        if idx < len(wrapped) - 1:
-            justify_text(draw, ln, body_text_x_start, current_y, letter_block_width, font_body, text_color)
-        else:
-            draw.text((body_text_x_start, current_y), ln, fill=text_color, font=font_body)
-        current_y += line_height + leading2
-    current_y += line_height
 
-# Viñetas: bien alineadas y con wrap dentro de la indentación
-bullet_indent = 50  # píxeles: distancia entre margen y comienzo del texto (ajustable)
-bullet_symbol = "•"
-bullet_gap_after_symbol = 50  # distancia entre el símbolo y el inicio del texto (ajustable)
-for item in bullet_items:
-    # ancho disponible para el texto de la viñeta (ajusta si quieres más margen)
-    max_width_for_bullet = letter_block_width - bullet_indent
-    # envolvemos por píxeles (no cambia)
-    wrapped = wrap_text_by_pixels(draw, item, font_body, max_width_for_bullet - 30)
-    if not wrapped:
-        continue
-
-    # dibujar viñeta y primera línea
-    draw.text((body_text_x_start + 30, current_y), bullet_symbol, fill=text_color, font=font_body)
-    draw.text((body_text_x_start + 30 + bullet_gap_after_symbol, current_y), wrapped[0], fill=text_color, font=font_body)
-    current_y += line_height + leading2
-
-    # líneas siguientes de la misma viñeta (con indent) — ahora SIN justificar, solo left-align
-    for cont in wrapped[1:]:
-        draw.text((body_text_x_start + 30 + bullet_indent, current_y), cont, fill=text_color, font=font_body)
-        current_y += line_height + leading2
-
-    current_y += line_height  # espacio entre viñetas
 
 # Párrafos de cierre
+# Párrafos de cierre
 for p in closing_paragraphs:
-    wrapped = wrap_text_by_pixels(draw, p, font_body, letter_block_width)
-    for idx, ln in enumerate(wrapped):
-        if idx < len(wrapped) - 1:
-            justify_text(draw, ln, body_text_x_start, current_y, letter_block_width, font_body, text_color)
-        else:
-            draw.text((body_text_x_start, current_y), ln, fill=text_color, font=font_body)
-        current_y += line_height + leading2
-    current_y += line_height
+    # Divide el texto en sub-párrafos usando \n\n
+    sub_paragraphs = p.split("\n\n")
+    for sub_p in sub_paragraphs:
+        current_y = draw_paragraph_with_bold_justified(
+            draw, sub_p,
+            body_text_x_start, current_y,
+            letter_block_width,
+            font_body, font_body_bold,
+            text_color, line_height, leading2
+        )
+        # Añade un salto de línea extra entre sub-parrafos
+        current_y += line_height * 1  # puedes ajustar la separación
 
-current_y += line_height * 2
+
+
+current_y += line_height - 40
 
 # Firma
 draw.text((body_text_x_start, current_y), "Atentamente:", fill=text_color, font=font_body, align="left")

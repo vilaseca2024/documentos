@@ -13,7 +13,7 @@ codigo_ref = "VLSCSA/RM/016/2025"
 nombre_empleado = "Liliana Zambrana Paco"
 nombre_remitente = "Edwing Mijael Delgadillo Navia"
 cargo_remitente = "Jefe de Gestión y RRHH"
-referencia = "I Entrega de credencial VILASECA Entrega de credencial VILASECA"
+referencia = "I Entrega de credencial VILASECA"
 lugar = "La Paz – Bolivia"
 titulo_memorandum = "MEMORANDUM"
 
@@ -217,7 +217,7 @@ draw.text((50, height - 140), "www.agencia-vilaseca.com", fill=text_color, font=
 title_y = 680
 vert_line_x = 1380          # Coordenada X de la línea vertical
 header_bottom_y = 1450      # Coordenada Y de la doble línea horizontal
-left_col_x = 650
+left_col_x = 600
 column_width = 600          # Ancho de las columnas (ajustado para que el centrado funcione)
 left_col_x_start = 700             # Inicio de la columna izquierda (alineado con el cuerpo del texto)
 left_col_x_center = left_col_x_start + (column_width / 2) # Centro de la columna izquierda
@@ -266,8 +266,8 @@ vert_line_end_y = header_bottom_y - 4
 draw.line([(vert_line_x, vert_line_start_y), (vert_line_x, vert_line_end_y)], fill=text_color, width=2)
 draw.line([(vert_line_x + 7, vert_line_start_y), (vert_line_x + 7, vert_line_end_y)], fill=text_color, width=2)
 # 5. Doble Línea Separadora Horizontal (Full-Width)
-draw.line([(650, header_bottom_y), (width - 150, header_bottom_y)], fill=text_color, width=2)
-draw.line([(650, header_bottom_y + 7), (width - 150, header_bottom_y + 7)], fill=text_color, width=2)
+draw.line([(600, header_bottom_y), (width - 150, header_bottom_y)], fill=text_color, width=2)
+draw.line([(600, header_bottom_y + 7), (width - 150, header_bottom_y + 7)], fill=text_color, width=2)
 
 
 # ============================================================
